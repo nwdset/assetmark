@@ -1,0 +1,144 @@
+---
+title: Volatility Targeting Using VIX
+subtitle:  with applications to portfolio management
+author: Jeff Li
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+fontsize: 12
+output:
+  beamer_presentation:
+    slide_level: 3
+    citation_package: natbib
+bibliography: references.bib 
+---
+
+### Introduction
+
+ - It is well known that volatility clusters in markets tends to "cluster" [@DING1996185].
+    That is, current high volatility predicts future high volatility, while
+    the same is true for low volatility.
+ - Using this empirical fact, one can construct a trading strategy that leverages up 
+    during periods of low volatility and leverage down during periods of high volatility.
+ - In this presentation, we employ the trading strategy described by [@HARVEY2018].
+    - We first replicate their strategy on SPX using VIX as our measure of volatility, 
+    we then apply it to other long-only portfolios such as Value and Momentum as described by 
+    Kenneth R. French's website [@KENFRENCH].
+
+### S&P 500's Daily Returns From 2000 to 2021
+
+```{r sp500_daily_returns, echo=FALSE}
+library(ggplot2)
+sp500_excess_returns <- read.csv(
+    '/home/jeff/AssetMark/data/spx_return_excess.csv'
+    )
+sp500_excess_returns$date <- as.Date(sp500_excess_returns$date)
+ggplot(data = sp500_excess_returns, aes(date, spx_returns, group = 1)) +
+ geom_line() +
+ theme_bw() +
+ theme(
+     panel.border = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.grid.minor = element_blank(),
+     axis.line = element_line(colour = "black")
+     )
+```
+
+### Strategy Methodology
+
+ - This strategy aims to create a "target" volatility for some particular portfolio.
+    - We aim to have a target of 20%, annualized.
+ - We leverage up or down according the 2-day lagged VIX values.
+ - In essence, if $r_t$ is the excess return\footnote{Excess of risk-free rate.} of our base portfolio at time $t$, then 
+    the return of our strategy (volatility targetted), $r_t'$, is 
+    $$r_t' = \left(\frac{20\%}{\sigma_{t-2}}\right)r_t k$$
+    where $\sigma_t$ is the VIX at time $t$.\footnote{To be precise, it's the VIX index divided by 100.} $k$ is 
+    chosen ex-post so our overall backtest will have a historical volatility of 20%.
+ - Due to the volatile nature of the VIX, we set caps and floors for our leverage constraints, which is a 50% floor
+    and a 200% cap.
+
+### Applying to S&P 500
+```{r spx_results, echo=FALSE}
+results_table <- read.csv('./data/SPX_results_table.csv')
+knitr::kable(results_table)
+```
+
+### Total P&L
+```{r pnl plot, echo=FALSE, fig.width = 14}
+data <- read.csv('./data/pnl.csv')
+data$date <- as.Date(data$date)
+ggplot(data = data, aes(date, PnL, color = variable, group = 1)) +
+ geom_point() +
+ theme_bw() +
+ theme(
+     panel.border = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.grid.minor = element_blank(),
+     axis.line = element_line(colour = "black")
+     ) +
+ labs(
+    caption = "This is different from [Harvey et al., 2018]
+    as their data starts from 1935."
+    )
+```
+
+### Rolling 30 Day Vol
+
+```{r vol plot, echo=FALSE, fig.width = 14}
+data <- read.csv('./data/30dayvol.csv')
+data$date <- as.Date(data$date)
+ggplot(data = data, aes(date, rolling30DayVol, color = variable, group = 1)) +
+ geom_point() +
+ theme_bw() +
+ theme(
+     panel.border = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.grid.minor = element_blank(),
+     axis.line = element_line(colour = "black")
+     )
+```
+
+### 1% Left Tail of Distribution
+```{r shortfall plot, echo=FALSE, fig.width = 14}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+data <- read.csv('./data/shortfall_returns.csv')
+data_spx <- na.omit(data$SPX)
+data_spx_target <- na.omit(data$SPX_target)
+d <- data.frame(x = c(data_spx, data_spx_target),
+            type = rep(c("SPX 1% Left Tail", "SPX Targetted Vol 1% Left Tail"),
+            c(length(data_spx), length(data_spx_target))))
+ggplot(d) +
+  geom_density(aes(x = x, colour = type, fill = type), alpha = 0.5) +
+  theme_bw() +
+   theme(
+     panel.border = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.grid.minor = element_blank(),
+     axis.line = element_line(colour = "black")
+     ) + 
+   xlab("Daily Returns") +
+   ylab("Probability")
+
+```
+
+### Applying to Top Decile of a Momentum Sort
+```{r momentum results, echo=FALSE}
+results_table <- read.csv('./data/momentum_results_table.csv')
+knitr::kable(results_table)
+```
+
+
+### Applying to Top Decile of a B/M Sort
+```{r value results, echo=FALSE}
+results_table <- read.csv('./data/value_results_table.csv')
+knitr::kable(results_table)
+```
+
+### Discussion
+ - We see that using VIX to create volatility targetting strategies
+   seem to improve on long-only strategies.
+ - However, these improvements comes at a significant increase in turnover.
+ - It could be the case that the increase in trading costs is the source of 
+   additional returns.
+ - In terms of implementing these strategies, doing it for S&P 500 related 
+   assets is the most feasiable due to liquidity constraints.
+      - One can trade S&P 500 futures while Momentum and Value portfolios
+         would require trading a lot of stocks.
