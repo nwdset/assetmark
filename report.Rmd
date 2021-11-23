@@ -80,6 +80,22 @@ ggplot(data = data, aes(date, PnL, color = variable, group = 1)) +
     )
 ```
 
+### Historical Leverage/Weights
+
+```{r strategy weights, echo=FALSE, fig.width = 14}
+data <- read.csv('./data/strategy_weights.csv')
+data$date <- as.Date(data$date)
+ggplot(data = data, aes(date, weights, group = 1)) +
+ geom_point() +
+ theme_bw() +
+ theme(
+     panel.border = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.grid.minor = element_blank(),
+     axis.line = element_line(colour = "black")
+     )
+```
+
 ### Rolling 30 Day Vol
 
 ```{r vol plot, echo=FALSE, fig.width = 14}
@@ -135,10 +151,16 @@ knitr::kable(results_table)
 ### Discussion
  - We see that using VIX to create volatility targetting strategies
    seem to improve on long-only strategies.
+
  - However, these improvements comes at a significant increase in turnover.
+
  - It could be the case that the increase in trading costs is the source of 
    additional returns.
+
  - In terms of implementing these strategies, doing it for S&P 500 related 
    assets is the most feasiable due to liquidity constraints.
       - One can trade S&P 500 futures while Momentum and Value portfolios
          would require trading a lot of stocks.
+
+ - Compare the difference in performance of VIX driven volatility targetting
+   compared to standard deviation driven volatility targetting
