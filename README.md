@@ -9,9 +9,8 @@
 
 ### CSVs
 #### strategy daily performance
-	- ./data/strategy\_return\_excess.csv
-#### benchmark daily performance
-benchmark is just the SPX index
-	- ./data/spx\_return\_excess.csv
+	- ./data/strategy_return_excess.csv
+#### benchmark daily performance(benchmark is just the SPX index)
+	- ./data/spx_return_excess.csv
 #### strategy daily allocation
-	- ./data/strategy\_weights.csv
+	- ./data/strategy_weights.csv
